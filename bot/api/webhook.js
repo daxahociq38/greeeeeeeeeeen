@@ -32,8 +32,8 @@ module.exports = async function handler(req, res) {
         const message = body.message;
         if (message && message.text === "/start") {
           await sendMessage(MAIN_BOT_TOKEN, message.chat.id,
-            "⚡️ <b>Ласкаво просимо до GreenWay!</b>\n\nНатисніть кнопку нижче щоб відкрити карту станцій 👇",
-            { reply_markup: { inline_keyboard: [[{ text: "🗺 Відкрити GreenWay", web_app: { url: MINIAPP_URL } }]] } }
+            "Welcome to GreenWay! Press the button below to open the app.",
+            { reply_markup: { inline_keyboard: [[{ text: "Open GreenWay", web_app: { url: MINIAPP_URL } }]] } }
           );
         }
         return res.status(200).json({ ok: true });
@@ -51,7 +51,33 @@ module.exports = async function handler(req, res) {
       const timestamp = new Date().toLocaleString("uk-UA", { timeZone: "Europe/Warsaw" });
 
       const supportMessage =
-        "<b>🔔 Новий квиток!</b>\n\n" +
-        "👤 " + (userName || "невідомий") + " (ID: " + userId + ")\n" +
-        "🏢 " + stationName + " (#" + stationId + ")\n" +
-        "🔌 " + connectorType + " #" + connectorLabel + ", " + connect
+        "<b>New ticket!</b>\n\n" +
+        "User: " + (userName || "unknown") + " (ID: " + userId + ")\n" +
+        "Station: " + stationName + " (#" + stationId + ")\n" +
+        "Connector: " + connectorType + " #" + connectorLabel + ", " + connectorPower + " kW\n" +
+        "Price: " + price + " " + currency + "\n" +
+        "Time: " + timestamp;
+
+      await sendMessage(BOT_TOKEN, SUPPORT_CHAT_ID, supportMessage);
+
+      if (userId && userId !== "browser_user") {
+        const userMsg =
+          "<b>Your charging ticket</b>\n\n" +
+          "Station: " + stationName + "\n" +
+          "Connector: " + connectorType + " #" + connectorLabel + "\n" +
+          "Price: " + price + " " + currency + "\n" +
+          "Time: " + timestamp + "\n\n" +
+          "Contact @Greenway_Supp for payment.";
+        await sendMessage(MAIN_BOT_TOKEN, userId, userMsg);
+      }
+
+      return res.status(200).json({ ok: true });
+    } catch (err) {
+      console.error("Error:", err.message);
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  }
+
+  if (req.method === "GET") return res.status(200).json({ ok: true, message: "alive" });
+  return res.status(405).json({ ok: false });
+};
