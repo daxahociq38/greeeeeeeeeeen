@@ -16,12 +16,17 @@ async function sendMessage(token, chatId, text, extra) {
 }
 
 module.exports = async function handler(req, res) {
-  console.log("SUPPORT_CHAT_ID:", SUPPORT_CHAT_ID);
-  console.log("Body:", JSON.stringify(req.body));
-
   if (req.method === "POST") {
     try {
-      const body = req.body;
+      let body = req.body;
+      if (!body) {
+        const chunks = [];
+        for await (const chunk of req) chunks.push(chunk);
+        body = JSON.parse(Buffer.concat(chunks).toString());
+      }
+
+      console.log("SUPPORT_CHAT_ID:", SUPPORT_CHAT_ID);
+      console.log("Body:", JSON.stringify(body));
 
       if (body.update_id !== undefined) {
         const message = body.message;
@@ -49,30 +54,4 @@ module.exports = async function handler(req, res) {
         "<b>🔔 Новий квиток!</b>\n\n" +
         "👤 " + (userName || "невідомий") + " (ID: " + userId + ")\n" +
         "🏢 " + stationName + " (#" + stationId + ")\n" +
-        "🔌 " + connectorType + " #" + connectorLabel + ", " + connectorPower + " кВт\n" +
-        "💰 " + price + " " + currency + "\n" +
-        "🕐 " + timestamp;
-
-      await sendMessage(BOT_TOKEN, SUPPORT_CHAT_ID, supportMessage);
-
-      if (userId && userId !== "browser_user") {
-        const userMsg =
-          "<b>🎫 Ваш квиток на зарядку</b>\n\n" +
-          "🏢 " + stationName + "\n" +
-          "🔌 " + connectorType + " #" + connectorLabel + "\n" +
-          "💰 " + price + " " + currency + "\n" +
-          "🕐 " + timestamp + "\n\n" +
-          "Напишіть @Greenway_Supp для оплати.";
-        await sendMessage(MAIN_BOT_TOKEN, userId, userMsg);
-      }
-
-      return res.status(200).json({ ok: true });
-    } catch (err) {
-      console.error("Error:", err.message);
-      return res.status(500).json({ ok: false, error: err.message });
-    }
-  }
-
-  if (req.method === "GET") return res.status(200).json({ ok: true, message: "alive" });
-  return res.status(405).json({ ok: false });
-};
+        "🔌 " + connectorType + " #" + connectorLabel + ", " + connect
