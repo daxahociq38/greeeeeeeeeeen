@@ -8,8 +8,21 @@ import { haversineKm } from '../utils/distance.js';
 import { fetchStations } from '../utils/greenwayApi.js';
 
 const AppContext = createContext(null);
+const POLL_INTERVAL = 15_000;
 
-const POLL_INTERVAL = 15_000; // refresh every 15 seconds for near real-time accuracy
+const TRANSLIT = {'а':'a','б':'b','в':'v','г':'h','д':'d','е':'e','є':'ye','ж':'zh','з':'z','и':'y','і':'i','ї':'yi','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'kh','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ь':'','ю':'yu','я':'ya'};
+
+function transliterate(str) {
+  return str.toLowerCase().split('').map(c => TRANSLIT[c] || c).join('');
+}
+
+function matchesQuery(station, query) {
+  const q = query.toLowerCase().trim();
+  if (!q) return true;
+  const qt = transliterate(q);
+  const fields = [(station.name||'').toLowerCase(),(station.address||'').toLowerCase(),(station.city||'').toLowerCase()];
+  return fields.some(f => f.includes(q)) || fields.map(transliterate).some(f => f.includes(qt));
+}
 
 export function AppProvider({ children }) {
   const router = useHashRouter();
@@ -19,7 +32,6 @@ export function AppProvider({ children }) {
   const photoCache = usePhotoCache();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
-
   const [allStations, setAllStations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -40,83 +52,44 @@ export function AppProvider({ children }) {
     }
   }, []);
 
-  // Initial load + polling
   useEffect(() => {
     loadStations();
     pollRef.current = setInterval(loadStations, POLL_INTERVAL);
     return () => clearInterval(pollRef.current);
   }, [loadStations]);
 
-  // Refresh when user returns to the app/tab (visibility change)
   useEffect(() => {
     const onVisible = () => {
-      if (document.visibilityState === 'visible') {
-        // Only refresh if data is older than 10 seconds
-        if (Date.now() - lastFetchRef.current > 10_000) {
-          loadStations();
-        }
+      if (document.visibilityState === 'visible' && Date.now() - lastFetchRef.current > 10_000) {
+        loadStations();
       }
     };
     document.addEventListener('visibilitychange', onVisible);
-
-    // Also refresh when Telegram WebApp resumes
     const tg = window.Telegram?.WebApp;
-    if (tg?.onEvent) {
-      tg.onEvent('viewportChanged', onVisible);
-    }
-
+    if (tg?.onEvent) tg.onEvent('viewportChanged', onVisible);
     return () => {
       document.removeEventListener('visibilitychange', onVisible);
       if (tg?.offEvent) tg.offEvent('viewportChanged', onVisible);
     };
   }, [loadStations]);
 
-  // Filtered + sorted stations
   const stations = useMemo(() => {
     let result = filtersHook.filterStations(allStations);
-
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (s) =>
-          s.name.toLowerCase().includes(q) ||
-          s.address.toLowerCase().includes(q) ||
-          s.city.toLowerCase().includes(q)
-      );
-    }
-
+    if (searchQuery.trim()) result = result.filter(s => matchesQuery(s, searchQuery));
     if (geo.position) {
       result = result
-        .map((s) => ({
-          ...s,
-          distance: haversineKm(geo.position.lat, geo.position.lng, s.lat, s.lng),
-        }))
+        .map(s => ({ ...s, distance: haversineKm(geo.position.lat, geo.position.lng, s.lat, s.lng) }))
         .sort((a, b) => a.distance - b.distance);
     }
-
     return result;
   }, [filtersHook, searchQuery, geo.position, allStations]);
 
-  const findStation = useCallback(
-    (id) => allStations.find((s) => s.id === id) || null,
-    [allStations]
-  );
+  const findStation = useCallback((id) => allStations.find(s => s.id === id) || null, [allStations]);
 
   const value = {
-    router,
-    geo,
-    favorites,
-    filters: filtersHook,
-    photoCache,
-    searchQuery,
-    setSearchQuery,
-    filterOpen,
-    setFilterOpen,
-    stations,
-    allStations,
-    findStation,
-    loading,
-    error,
+    router, geo, favorites, filters: filtersHook, photoCache,
+    searchQuery, setSearchQuery, filterOpen, setFilterOpen,
+    stations, allStations, findStation, loading, error,
     refreshStations: loadStations,
   };
 
