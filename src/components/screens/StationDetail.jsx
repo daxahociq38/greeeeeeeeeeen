@@ -4,7 +4,7 @@ import { useI18n } from '../../i18n/index.jsx';
 import { BoltIcon, HeartIcon, NavigateIcon, ArrowLeftIcon } from '../icons/index.jsx';
 import SupportButton from '../shared/SupportButton.jsx';
 import { openMapsNavigation } from '../../utils/openMapsApp.js';
-import { getUserId, getUserName, showTgPopup } from '../../utils/telegramHelpers.js';
+import { getUserId, getUserName, getUserHandle, showTgPopup } from '../../utils/telegramHelpers.js';
 import { formatDistance, haversineKm } from '../../utils/distance.js';
 import { fetchStationDetail } from '../../utils/greenwayApi.js';
 import { getTierByStation, getTier } from '../../constants/pricing.js';
@@ -83,6 +83,11 @@ export default function StationDetail() {
   const handleActivate = async () => {
     if (!canPay || !selected) return;
     try {
+      const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+      const userId = tgUser?.id || null;
+      const userHandle = tgUser?.username || null;
+      const userName = tgUser ? [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') : '';
+
       const activationData = {
         station_name: station.name,
         station_id: station.id,
@@ -93,33 +98,37 @@ export default function StationDetail() {
         price: selectedTier.price,
         currency: 'PLN',
         activated_at: new Date().toISOString(),
-        user_id: window.Telegram?.WebApp?.initDataUnsafe?.user?.id || null,
+        user_id: userId,
+        user_handle: userHandle,
+        user_name: userName,
       };
 
-      // Save to PocketBase (optional — skip if not configured)
-      try {
-        await pb.collection('activations').create(activationData);
-      } catch (_) { /* PocketBase not available */ }
+      // Save to PocketBase (optional)
+      try { await pb.collection('activations').create(activationData); } catch (_) {}
 
-      // Send ticket to user + notify support via bot
+      // Send ticket to support group
       const notifyUrl = import.meta.env.VITE_BOT_NOTIFY_URL;
       if (notifyUrl) {
-        await fetch(`${notifyUrl}`, {
+        await fetch(notifyUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...activationData, user_id: window.Telegram?.WebApp?.initDataUnsafe?.user?.id || null, user_name: window.Telegram?.WebApp?.initDataUnsafe?.user?.username || null }
-      setTicketSent(true); return; return;
+          body: JSON.stringify(activationData),
+        }).catch(() => {});
       }
 
-      const tg = window.Telegram?.WebApp;
-      if (tg?.openTelegramLink) {
-        tg.openTelegramLink('https://t.me/Backendgreen_bot');
-      } else {
-        window.open('https://t.me/Backendgreen_bot', '_blank');
-      }
+      setTicketSent(true);
     } catch (error) {
       console.error(error);
       showTgPopup(t('error'), t('chargingError'));
+    }
+  };
+
+  const openSupport = () => {
+    const tg = window.Telegram?.WebApp;
+    if (tg?.openTelegramLink) {
+      tg.openTelegramLink('https://t.me/Greenway_Supp');
+    } else {
+      window.open('https://t.me/Greenway_Supp', '_blank');
     }
   };
 
@@ -268,19 +277,15 @@ export default function StationDetail() {
         )}
       </div>
 
-      {/* Payment button / Thank you screen */}
+      {/* Payment button / Success screen */}
       {ticketSent ? (
-        <div className="gw-bottom-action" style={{display:'flex',flexDirection:'column',gap:'12px',paddingBottom:'24px'}}>
-          <div style={{textAlign:'center'}}>
-            <div style={{fontSize:'32px'}}>✅</div>
-            <div style={{fontWeight:'700',fontSize:'16px',marginTop:'8px'}}>Квиток надіслано!</div>
-            <div style={{fontSize:'13px',color:'#666',marginTop:'4px'}}>Зверніться до підтримки для оплати</div>
+        <div className="gw-bottom-action" style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+          <div style={{textAlign:'center',padding:'8px 0'}}>
+            <div style={{fontSize:'22px',marginBottom:'4px'}}>✅</div>
+            <div style={{fontWeight:'700',fontSize:'15px',color:'var(--gw-text)'}}>Квиток надіслано!</div>
+            <div style={{fontSize:'12px',color:'var(--gw-text-secondary)',marginTop:'4px'}}>Зверніться до підтримки для оплати</div>
           </div>
-          <button type="button" className="gw-btn-primary" onClick={() => {
-            const tg = window.Telegram?.WebApp;
-            if (tg?.openTelegramLink) tg.openTelegramLink('https://t.me/Greenway_Supp');
-            else window.open('https://t.me/Greenway_Supp', '_blank');
-          }}>
+          <button type="button" onClick={openSupport} className="gw-btn-primary">
             💬 Написати в підтримку
           </button>
         </div>
@@ -292,15 +297,6 @@ export default function StationDetail() {
           </button>
         </div>
       )}
-    </div>
-  );
-}
-      <div className="gw-bottom-action">
-        <button type="button" disabled={!canPay} onClick={handleActivate} className="gw-btn-primary">
-          <BoltIcon size={20} />
-          {btnText}
-        </button>
-      </div>
     </div>
   );
 }
