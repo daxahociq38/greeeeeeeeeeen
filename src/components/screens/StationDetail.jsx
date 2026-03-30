@@ -28,6 +28,7 @@ export default function StationDetail() {
   const [detail, setDetail] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(true);
   const [selectedConnector, setSelectedConnector] = useState(null);
+  const [ticketSent, setTicketSent] = useState(false);
 
   useEffect(() => {
     if (!stationId) return;
