@@ -108,7 +108,7 @@ export default function StationDetail() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...activationData, user_id: window.Telegram?.WebApp?.initDataUnsafe?.user?.id || null, user_name: window.Telegram?.WebApp?.initDataUnsafe?.user?.username || null }
-      setTicketSent(true);
+      setTicketSent(true); return; return;
       }
 
       const tg = window.Telegram?.WebApp;
