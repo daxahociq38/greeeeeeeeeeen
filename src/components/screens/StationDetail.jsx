@@ -110,7 +110,7 @@ export default function StationDetail() {
         }).catch(() => {});
       }
 
-      showTgPopup(t('ticketCreated'), t('ticketCreatedMsg'));
+      const tg = window.Telegram?.WebApp; if (tg?.showPopup) { tg.showPopup({ title: t('ticketCreated'), message: t('ticketCreatedMsg'), buttons: [{ type: 'ok' }] }, () => { if (tg?.openTelegramLink) tg.openTelegramLink('https://t.me/Greenway_Supp'); else window.open('https://t.me/Greenway_Supp', '_blank'); }); } else { alert(t('ticketCreatedMsg')); window.open('https://t.me/Greenway_Supp', '_blank'); }
 
       const tg = window.Telegram?.WebApp;
       if (tg?.openTelegramLink) {
