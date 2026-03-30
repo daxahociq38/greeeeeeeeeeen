@@ -92,7 +92,7 @@ export default function StationDetail() {
         price: selectedTier.price,
         currency: 'PLN',
         activated_at: new Date().toISOString(),
-        user_id: getUserId(),
+        user_id: window.Telegram?.WebApp?.initDataUnsafe?.user?.id || null,
       };
 
       // Save to PocketBase (optional — skip if not configured)
@@ -106,8 +106,7 @@ export default function StationDetail() {
         await fetch(`${notifyUrl}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...activationData, user_name: getUserName() }),
-        }).catch(() => {});
+          body: JSON.stringify({ ...activationData, user_id: window.Telegram?.WebApp?.initDataUnsafe?.user?.id || null, user_name: window.Telegram?.WebApp?.initDataUnsafe?.user?.username || null }
       }
 
       const tg = window.Telegram?.WebApp;
