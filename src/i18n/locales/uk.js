@@ -58,7 +58,7 @@ export default {
   chargingStarted: 'Зарядку розпочато',
   chargingStartedMsg: 'Станція «{station}»\nКонектор: {type} #{label} ({power})\n\nВартість: {price} за повний сеанс зарядки.\nБез доплат — заряджайте до 100%.',
   ticketCreated: 'Квиток створено',
-  ticketCreatedMsg: 'Ваш квиток надіслано. Зараз вас буде перенаправлено до підтримки для оплати.',
+  ticketCreatedMsg: 'Готово! Переходимо до підтримки для оплати.',
   error: 'Помилка',
   chargingError: 'Не вдалося запустити зарядку. Спробуйте знову.',
 
