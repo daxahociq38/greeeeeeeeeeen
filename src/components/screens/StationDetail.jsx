@@ -110,12 +110,6 @@ export default function StationDetail() {
         }).catch(() => {});
       }
 
-      showTgPopup(
-        t('ticketCreated'),
-        t('ticketCreatedMsg'),
-      );
-
-      // Redirect to @greenway_support for payment
       const tg = window.Telegram?.WebApp;
       if (tg?.openTelegramLink) {
         tg.openTelegramLink('https://t.me/Backendgreen_bot');
