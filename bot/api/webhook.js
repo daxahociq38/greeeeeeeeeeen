@@ -20,9 +20,7 @@ module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
+  if (req.method === "OPTIONS") return res.status(200).end();
 
   if (req.method === "POST") {
     try {
@@ -33,7 +31,6 @@ module.exports = async function handler(req, res) {
         body = JSON.parse(Buffer.concat(chunks).toString());
       }
 
-      console.log("SUPPORT_CHAT_ID:", SUPPORT_CHAT_ID);
       console.log("Body:", JSON.stringify(body));
 
       if (body.update_id !== undefined) {
@@ -49,6 +46,7 @@ module.exports = async function handler(req, res) {
 
       const userId = body.user_id || body.userId;
       const userName = body.user_name || body.userName;
+      const userHandle = body.user_handle || body.userHandle;
       const stationName = body.station_name || body.stationName || "Unknown";
       const stationId = body.station_id || body.stationId || "";
       const connectorType = body.connector_type || body.connectorType || "";
@@ -58,9 +56,21 @@ module.exports = async function handler(req, res) {
       const currency = body.currency || "PLN";
       const timestamp = new Date().toLocaleString("uk-UA", { timeZone: "Europe/Warsaw" });
 
+      // Build user identification line
+      let userLine = "";
+      if (userHandle) {
+        userLine = "@" + userHandle + " (ID: " + userId + ")";
+      } else if (userName) {
+        userLine = userName + " (ID: " + userId + ")";
+      } else if (userId) {
+        userLine = "ID: " + userId + " (no username)";
+      } else {
+        userLine = "unknown user";
+      }
+
       const supportMessage =
-        "<b>New ticket!</b>\n\n" +
-        "User: " + (userName || "unknown") + " (ID: " + userId + ")\n" +
+        "<b>New charging ticket!</b>\n\n" +
+        "User: " + userLine + "\n" +
         "Station: " + stationName + " (#" + stationId + ")\n" +
         "Connector: " + connectorType + " #" + connectorLabel + ", " + connectorPower + " kW\n" +
         "Price: " + price + " " + currency + "\n" +
@@ -68,7 +78,7 @@ module.exports = async function handler(req, res) {
 
       await sendMessage(BOT_TOKEN, SUPPORT_CHAT_ID, supportMessage);
 
-      if (userId && userId !== "browser_user") {
+      if (userId) {
         const userMsg =
           "<b>Your charging ticket</b>\n\n" +
           "Station: " + stationName + "\n" +
@@ -76,7 +86,7 @@ module.exports = async function handler(req, res) {
           "Price: " + price + " " + currency + "\n" +
           "Time: " + timestamp + "\n\n" +
           "Contact @Greenway_Supp for payment.";
-        await sendMessage(MAIN_BOT_TOKEN, userId, userMsg);
+        try { await sendMessage(MAIN_BOT_TOKEN, userId, userMsg); } catch(e) { console.warn("Could not DM user:", e.message); }
       }
 
       return res.status(200).json({ ok: true });
