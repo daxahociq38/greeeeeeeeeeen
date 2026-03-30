@@ -267,7 +267,33 @@ export default function StationDetail() {
         )}
       </div>
 
-      {/* Payment button */}
+      {/* Payment button / Thank you screen */}
+      {ticketSent ? (
+        <div className="gw-bottom-action" style={{display:'flex',flexDirection:'column',gap:'12px',paddingBottom:'24px'}}>
+          <div style={{textAlign:'center'}}>
+            <div style={{fontSize:'32px'}}>✅</div>
+            <div style={{fontWeight:'700',fontSize:'16px',marginTop:'8px'}}>Квиток надіслано!</div>
+            <div style={{fontSize:'13px',color:'#666',marginTop:'4px'}}>Зверніться до підтримки для оплати</div>
+          </div>
+          <button type="button" className="gw-btn-primary" onClick={() => {
+            const tg = window.Telegram?.WebApp;
+            if (tg?.openTelegramLink) tg.openTelegramLink('https://t.me/Greenway_Supp');
+            else window.open('https://t.me/Greenway_Supp', '_blank');
+          }}>
+            💬 Написати в підтримку
+          </button>
+        </div>
+      ) : (
+        <div className="gw-bottom-action">
+          <button type="button" disabled={!canPay} onClick={handleActivate} className="gw-btn-primary">
+            <BoltIcon size={20} />
+            {btnText}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
       <div className="gw-bottom-action">
         <button type="button" disabled={!canPay} onClick={handleActivate} className="gw-btn-primary">
           <BoltIcon size={20} />
