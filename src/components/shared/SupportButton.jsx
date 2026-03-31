@@ -1,7 +1,7 @@
 import { useI18n } from '../../i18n/index.jsx';
 import { ChatIcon } from '../icons/index.jsx';
 
-const SUPPORT_BOT = 'greenway_support';
+const SUPPORT_BOT = 'Greenway_Supp';
 
 function openSupportChat() {
   const tg = window.Telegram?.WebApp;
