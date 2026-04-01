@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext.jsx';
 import { useI18n } from '../../i18n/index.jsx';
-import { BoltIcon, HeartIcon, NavigateIcon, ArrowLeftIcon } from '../icons/index.jsx';
+import { BoltIcon, HeartIcon, NavigateIcon, ArrowLeftIcon, ChatIcon } from '../icons/index.jsx';
 import SupportButton from '../shared/SupportButton.jsx';
 import { openMapsNavigation } from '../../utils/openMapsApp.js';
-import { showTgPopup } from '../../utils/telegramHelpers.js';
 import { formatDistance, haversineKm } from '../../utils/distance.js';
 import { fetchStationDetail } from '../../utils/greenwayApi.js';
 import { getTierByStation, getTier } from '../../constants/pricing.js';
@@ -28,6 +27,7 @@ export default function StationDetail() {
   const [detail, setDetail] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(true);
   const [selectedConnector, setSelectedConnector] = useState(null);
+  const [showSuccess, setShowSuccess] = useState(false);
   useEffect(() => {
     if (!stationId) return;
     setLoadingDetail(true);
@@ -108,17 +108,15 @@ export default function StationDetail() {
         }).catch(() => {});
       }
 
-      showTgPopup(t('ticketCreated'), t('ticketCreatedMsg'));
-
-      const tg = window.Telegram?.WebApp;
-      if (tg?.openTelegramLink) {
-        tg.openTelegramLink('https://t.me/Greenway_Supp');
-      } else {
-        window.open('https://t.me/Greenway_Supp', '_blank');
-      }
+      setShowSuccess(true);
     } catch (error) {
       console.error(error);
-      showTgPopup(t('error'), t('chargingError'));
+      const tg = window.Telegram?.WebApp;
+      if (tg?.showPopup) {
+        tg.showPopup({ title: t('error'), message: t('chargingError'), buttons: [{ type: 'ok' }] });
+      } else {
+        alert(`${t('error')}\n${t('chargingError')}`);
+      }
     }
   };
 
@@ -274,6 +272,42 @@ export default function StationDetail() {
           {btnText}
         </button>
       </div>
+
+      {/* Success popup */}
+      {showSuccess && (
+        <>
+          <div className="gw-success-backdrop" onClick={() => setShowSuccess(false)} />
+          <div className="gw-success-popup">
+            <div className="gw-success-popup__icon">
+              <CheckIcon size={32} />
+            </div>
+            <h2 className="gw-success-popup__title">{t('ticketCreated')}</h2>
+            <p className="gw-success-popup__msg">{t('ticketCreatedMsg')}</p>
+            <button
+              type="button"
+              className="gw-btn-primary"
+              onClick={() => {
+                const tg = window.Telegram?.WebApp;
+                if (tg?.openTelegramLink) {
+                  tg.openTelegramLink('https://t.me/Greenway_Supp');
+                } else {
+                  window.open('https://t.me/Greenway_Supp', '_blank');
+                }
+              }}
+            >
+              <ChatIcon size={20} />
+              {t('contactSupport')}
+            </button>
+            <button
+              type="button"
+              className="gw-success-popup__close"
+              onClick={() => setShowSuccess(false)}
+            >
+              {t('close')}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
