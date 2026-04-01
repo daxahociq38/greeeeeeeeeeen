@@ -91,6 +91,8 @@ export default {
   // Support
   support: 'Support',
   supportHint: 'Need help? Message us',
+  contactSupport: 'Contact Support',
+  close: 'Close',
 
   // Misc
   unavailable: 'Unavailable',
