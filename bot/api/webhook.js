@@ -35,7 +35,39 @@ module.exports = async function handler(req, res) {
 
       if (body.update_id !== undefined) {
         const message = body.message;
-        if (message && message.text === "/start") {
+        if (message && message.text && message.text.startsWith("/start")) {
+          const payload = message.text.replace("/start", "").trim();
+
+          /* ── Deep link: /start ticket_XXXXX ── */
+          if (payload.startsWith("ticket_")) {
+            const ticketId = payload.replace("ticket_", "");
+            const user = message.from || {};
+            const userName = [user.first_name, user.last_name].filter(Boolean).join(" ");
+            const userHandle = user.username ? " (@" + user.username + ")" : "";
+            const userLink = '<a href="tg://user?id=' + user.id + '">' + userName + '</a>';
+
+            // Confirm to the user
+            const userMsg =
+              "<b>Your ticket has been received!</b>\n\n" +
+              "Ticket: <code>" + ticketId + "</code>\n\n" +
+              "Our manager will contact you shortly to confirm payment.\n\n" +
+              "Need urgent help? Message @Greenway_Supp";
+            try { await sendMessage(MAIN_BOT_TOKEN, message.chat.id, userMsg); } catch(e) { console.warn("Could not DM user:", e.message); }
+
+            // Notify support with clickable user link
+            if (SUPPORT_CHAT_ID) {
+              const supportMsg =
+                "<b>Ticket from user</b>\n\n" +
+                "User: " + userLink + userHandle + "\n" +
+                "User ID: <code>" + user.id + "</code>\n" +
+                "Ticket: <code>" + ticketId + "</code>\n\n" +
+                "User is waiting for payment confirmation.";
+              try { await sendMessage(BOT_TOKEN, SUPPORT_CHAT_ID, supportMsg); } catch(e) { console.warn("Could not notify support:", e.message); }
+            }
+            return res.status(200).json({ ok: true });
+          }
+
+          /* ── Normal /start — show welcome ── */
           await sendMessage(MAIN_BOT_TOKEN, message.chat.id,
             "Welcome to GreenWay! Press the button below to open the app.",
             { reply_markup: { inline_keyboard: [[{ text: "Open GreenWay", web_app: { url: MINIAPP_URL } }]] } }
@@ -47,6 +79,7 @@ module.exports = async function handler(req, res) {
       const userId = body.user_id || body.userId;
       const userName = body.user_name || body.userName;
       const userHandle = body.user_handle || body.userHandle;
+      const ticketId = body.ticket_id || null;
       const stationName = body.station_name || body.stationName || "Unknown";
       const stationId = body.station_id || body.stationId || "";
       const connectorType = body.connector_type || body.connectorType || "";
@@ -56,22 +89,18 @@ module.exports = async function handler(req, res) {
       const currency = body.currency || "PLN";
       const timestamp = new Date().toLocaleString("uk-UA", { timeZone: "Europe/Warsaw" });
 
-      // Build user identification line
-      let userLine = "";
-      if (userHandle) {
-        userLine = "@" + userHandle + " (ID: " + userId + ")";
-      } else if (userName) {
-        userLine = userName + " (ID: " + userId + ")";
-      } else if (userId) {
-        userLine = "ID: " + userId + " (no username)";
-      } else {
-        userLine = "unknown user";
-      }
+      // Build clickable user link for support
+      const userLink = userId
+        ? '<a href="tg://user?id=' + userId + '">' + (userName || "user") + '</a>'
+        : (userName || "unknown user");
+      const handleText = userHandle ? " (@" + userHandle + ")" : "";
 
       const supportMessage =
         "<b>New charging ticket!</b>\n\n" +
-        "User: " + userLine + "\n" +
-        "Station: " + stationName + " (#" + stationId + ")\n" +
+        "User: " + userLink + handleText + "\n" +
+        "User ID: <code>" + (userId || "n/a") + "</code>\n" +
+        (ticketId ? "Ticket: <code>" + ticketId + "</code>\n" : "") +
+        "\nStation: " + stationName + " (#" + stationId + ")\n" +
         "Connector: " + connectorType + " #" + connectorLabel + ", " + connectorPower + " kW\n" +
         "Price: " + price + " " + currency + "\n" +
         "Time: " + timestamp;
@@ -80,12 +109,14 @@ module.exports = async function handler(req, res) {
 
       if (userId) {
         const userMsg =
-          "<b>Your charging ticket</b>\n\n" +
+          "<b>Your ticket has been received!</b>\n\n" +
           "Station: " + stationName + "\n" +
           "Connector: " + connectorType + " #" + connectorLabel + "\n" +
           "Price: " + price + " " + currency + "\n" +
-          "Time: " + timestamp + "\n\n" +
-          "Contact @Greenway_Supp for payment.";
+          "Time: " + timestamp + "\n" +
+          (ticketId ? "Ticket: <code>" + ticketId + "</code>\n" : "") +
+          "\nOur manager will contact you shortly.\n" +
+          "Need help? Message @Greenway_Supp";
         try { await sendMessage(MAIN_BOT_TOKEN, userId, userMsg); } catch(e) { console.warn("Could not DM user:", e.message); }
       }
 
