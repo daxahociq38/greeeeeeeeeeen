@@ -69,10 +69,9 @@ module.exports = async function handler(req, res) {
 
           /* ── Normal /start — show welcome ── */
           await sendMessage(MAIN_BOT_TOKEN, message.chat.id,
-            "⚡ Вітаємо у GreenWay!\n\nМи допоможемо знайти та оплатити зарядку для електромобіля у Польщі 🇵🇱\n\n💰 Тарифи (за сесію):\n• Стандарт (до 22 кВт) — 50 PLN\n• Швидка (22+ кВт) — 80 PLN\n\n✅ Без доплат · Без ліміту часу · До 100%\n\nНатисніть кнопку нижче 👇"
-,
-            { reply_markup: { inline_keyboard: [[{ text: "Open GreenWay", web_app: { url: MINIAPP_URL } }]] } }
-          );
+  "⚡ <b>Вітаємо у GreenWay!</b>\n\nМи допоможемо знайти та оплатити зарядку для електромобіля у Польщі 🇵🇱\n\n💰 <b>Тарифи (за сесію):</b>\n• Стандарт (до 22 кВт) — 50 PLN\n• Швидка (22+ кВт) — 80 PLN\n\n✅ Без доплат · Без ліміту часу · До 100%\n\n💬 Підтримка: @greenway_supersupp\n\nНатисніть кнопку нижче 👇",
+  { reply_markup: { inline_keyboard: [[{ text: "🔋 Відкрити GreenWay", web_app: { url: MINIAPP_URL } }]] } }
+);
         }
         return res.status(200).json({ ok: true });
       }
