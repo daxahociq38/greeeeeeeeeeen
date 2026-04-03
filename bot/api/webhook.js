@@ -51,7 +51,7 @@ module.exports = async function handler(req, res) {
               "<b>Your ticket has been received!</b>\n\n" +
               "Ticket: <code>" + ticketId + "</code>\n\n" +
               "Our manager will contact you shortly to confirm payment.\n\n" +
-              "Need urgent help? Message @Greenway_Supp";
+              "Need urgent help? Message @greenway_supersupp";
             try { await sendMessage(MAIN_BOT_TOKEN, message.chat.id, userMsg); } catch(e) { console.warn("Could not DM user:", e.message); }
 
             // Notify support with clickable user link
