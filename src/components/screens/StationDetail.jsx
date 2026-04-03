@@ -289,9 +289,9 @@ export default function StationDetail() {
               onClick={() => {
                 const tg = window.Telegram?.WebApp;
                 if (tg?.openTelegramLink) {
-                  tg.openTelegramLink('https://t.me/Greenway_Supp');
+                  tg.openTelegramLink('https://t.me/greenway_supersupp');
                 } else {
-                  window.open('https://t.me/Greenway_Supp', '_blank');
+                  window.open('https://t.me/greenway_supersupp', '_blank');
                 }
               }}
             >
