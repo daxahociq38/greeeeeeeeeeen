@@ -77,10 +77,10 @@ export default function StationDetail() {
     setSelectedConnector(selectedConnector === connector.id ? null : connector.id);
   };
 
-  const handleActivate = async () => {
+    const handleActivate = async () => {
     if (!canPay || !selected) return;
     try {
-            const tg = window.Telegram?.WebApp;
+      const tg = window.Telegram?.WebApp;
       let tgUser = tg?.initDataUnsafe?.user;
       if (!tgUser && tg?.initData) {
         try {
@@ -89,6 +89,8 @@ export default function StationDetail() {
           if (userStr) tgUser = JSON.parse(userStr);
         } catch {}
       }
+
+      console.log('TG user:', tgUser, 'initData:', tg?.initData, 'initDataUnsafe:', tg?.initDataUnsafe);
 
       const activationData = {
         station_name: station.name,
@@ -103,8 +105,7 @@ export default function StationDetail() {
         user_id: tgUser?.id || null,
         user_handle: tgUser?.username || null,
         user_name: tgUser ? [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') : '',
-           };
-
+      };
 
       const notifyUrl = import.meta.env.VITE_BOT_NOTIFY_URL || 'https://greeeeeeeeeen-xqa7.vercel.app/api/webhook';
       fetch(notifyUrl, {
@@ -123,6 +124,7 @@ export default function StationDetail() {
       }
     }
   };
+
 
   let btnText;
   if (!hasAvailable) {
