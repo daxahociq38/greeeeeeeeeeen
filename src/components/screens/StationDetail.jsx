@@ -81,7 +81,16 @@ export default function StationDetail() {
   const handleActivate = async () => {
     if (!canPay || !selected) return;
     try {
-      const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+            const tg = window.Telegram?.WebApp;
+      let tgUser = tg?.initDataUnsafe?.user;
+      if (!tgUser && tg?.initData) {
+        try {
+          const params = new URLSearchParams(tg.initData);
+          const userStr = params.get('user');
+          if (userStr) tgUser = JSON.parse(userStr);
+        } catch {}
+      }
+
       const activationData = {
         station_name: station.name,
         station_id: station.id,
