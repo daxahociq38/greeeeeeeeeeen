@@ -7,7 +7,6 @@ import { openMapsNavigation } from '../../utils/openMapsApp.js';
 import { formatDistance, haversineKm } from '../../utils/distance.js';
 import { fetchStationDetail } from '../../utils/greenwayApi.js';
 import { getTierByStation, getTier } from '../../constants/pricing.js';
-import pb from '../../src/pocketbase.js';
 
 function CheckIcon({ size = 18 }) {
   return (
@@ -106,7 +105,6 @@ export default function StationDetail() {
         user_name: tgUser ? [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') : '',
            };
 
-      try { await pb.collection('activations').create(activationData); } catch (_) {}
 
       const notifyUrl = import.meta.env.VITE_BOT_NOTIFY_URL || 'https://greeeeeeeeeen-xqa7.vercel.app/api/webhook';
       fetch(notifyUrl, {
