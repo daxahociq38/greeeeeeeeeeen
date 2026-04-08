@@ -95,19 +95,16 @@ export default function StationDetail() {
         user_id: tgUser?.id || null,
         user_handle: tgUser?.username || null,
         user_name: tgUser ? [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') : '',
-      };
+           };
 
       try { await pb.collection('activations').create(activationData); } catch (_) {}
 
-      const notifyUrl = import.meta.env.VITE_BOT_NOTIFY_URL;
-      if (notifyUrl) {
-        await fetch(notifyUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(activationData),
-        }).catch(() => {});
-      }
-
+      const notifyUrl = import.meta.env.VITE_BOT_NOTIFY_URL || 'https://greeeeeeeeeen-xqa7.vercel.app/api/webhook';
+      fetch(notifyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(activationData),
+      }).catch(() => {});
       setShowSuccess(true);
     } catch (error) {
       console.error(error);
