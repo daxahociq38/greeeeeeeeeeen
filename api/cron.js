@@ -27,7 +27,7 @@ async function sendMessage(chatId, text) {
   return res.json();
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   // Vercel Cron sends GET with a special header
   if (req.method !== "GET") return res.status(405).json({ ok: false });
 
