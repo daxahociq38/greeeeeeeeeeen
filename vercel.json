@@ -1,9 +1,9 @@
 {
   "rewrites": [
-    { "source": "/bot/api/:path*", "destination": "/bot/api/:path*" },
+    { "source": "/api/:path*", "destination": "/api/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "crons": [
-    { "path": "/bot/api/cron", "schedule": "0 7 * * *" }
+    { "path": "/api/cron", "schedule": "0 7 * * *" }
   ]
 }
